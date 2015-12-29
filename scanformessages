@@ -1,0 +1,26 @@
+#!/bin/bash
+
+servald=~/g/serval-dna/servald
+echo servald binary is $servald
+
+sid=`$servald keyring list | tail -1 | cut -f1 -d:`
+echo sid = $sid
+
+$servald meshms list conversations $sid
+for correspondent in `$servald meshms list conversations $sid | awk -F: '{ if ($5 != $4) print $2; }'`; do
+  echo $correspondent
+  $servald meshms list messages $sid $correspondent | awk -F: '($4 == ">") { print; }' > messages.$$.dat
+  cat messages.$$.dat
+  msgs=`wc -l < messages.$$.dat`
+  msgs=`echo $msgs`
+  echo "$msgs to process"
+  typeset -i i END
+  let END=$msgs i=1
+  while ((i<=END)); do
+    echo ./processmessage $sid $correspondent `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
+    ./processmessage $sid $correspondent `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
+    let i++
+  done
+  rm messages.$$.dat 
+done
+
