@@ -1,0 +1,25 @@
+#!/bin/bash
+
+number=$1
+message=$2
+
+rawurlencode() {
+  local string="${1}"
+  local strlen=${#string}
+  local encoded=""
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  echo "${encoded}"    # You can either set a return variable (FASTER) 
+  REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
+
+rawurlencode "${message}"
+echo wget -qO- 'https://www.textmagic.com/app/api?'`cat credentials.txt`"&cmd=send&text=${REPLY}&phone=${number}&unicode=0"
+wget -qO- 'https://www.textmagic.com/app/api?'`cat credentials.txt`"&cmd=send&text=${REPLY}&phone=${number}&unicode=0"
