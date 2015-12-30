@@ -1,1 +1,16 @@
 echo "$1"
+
+to="$1"
+from="$2"
+messageindex="$3"
+message="$4"
+
+# By default, we want to send each received messase out via SMS to a list of
+# recipients.
+
+toprefix=`echo $1 | cut -c1-12`\*
+smsmessage="Serval MeshMS sent from $from to $toprefix (MSGINDEX: $messageindex). Message is: $message"
+
+for smsrecipient in $(cat smsnumbers.txt); do
+  echo $smsrecipient $smsmessage
+done

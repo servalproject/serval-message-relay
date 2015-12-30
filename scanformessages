@@ -8,7 +8,12 @@ echo sid = $sid
 
 $servald meshms list conversations $sid
 for correspondent in `$servald meshms list conversations $sid | awk -F: '{ if ($5 != $4) print $2; }'`; do
-  echo $correspondent
+  lastoffset=`cat lastoffset.$correspondent`
+  if [ "x$lastoffset" == "x" ]; then
+    lastoffset=-1
+  fi
+  echo $correspondent from message offset $lastoffset
+  newlastoffset=$lastoffset
   $servald meshms list messages $sid $correspondent | awk -F: '($4 == ">") { print; }' > messages.$$.dat
   cat messages.$$.dat
   msgs=`wc -l < messages.$$.dat`
@@ -17,10 +22,18 @@ for correspondent in `$servald meshms list conversations $sid | awk -F: '{ if ($
   typeset -i i END
   let END=$msgs i=1
   while ((i<=END)); do
-    echo ./processmessage $sid $correspondent `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
-    ./processmessage $sid $correspondent `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
+    msgoffset=`cat messages.$$.dat | cut -f2 -d: |  sed -n ${i}p`
+    echo "message offset = $msgoffset"
+    if [ $msgoffset -gt $lastoffset ]; then
+      echo ./processmessage $sid $correspondent $msgoffset `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
+      ./processmessage $sid $correspondent $msgoffset `cat messages.$$.dat | cut -f5- -d: |  sed -n ${i}p` 
+    fi
+    if [  $msgoffset -gt $newlastoffset ]; then
+      newlastoffset=$msgoffset
+    fi
     let i++
   done
+  echo $newlastoffset > lastoffset.$correspondent
   rm messages.$$.dat 
 done
 
