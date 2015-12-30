@@ -11,6 +11,11 @@ message="$4"
 toprefix=`echo $1 | cut -c1-12`\*
 smsmessage="Serval MeshMS sent from $from to $toprefix (MSGINDEX: $messageindex). Message is: $message"
 
+# XXX - Add message to history of messages for updating a web page showing them?
+echo `date`": ${smsmessage}" >> messagelog.txt
+sed '1!G;h;$!d' < messagelog.txt >messagelogreverse.txt
+
 for smsrecipient in $(cat smsnumbers.txt); do
-  echo $smsrecipient $smsmessage
+  echo sendsms $smsrecipient $smsmessage
+  ./sendsms $smsrecipient "$smsmessage"
 done
